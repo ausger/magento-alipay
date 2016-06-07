@@ -38,8 +38,14 @@ class CosmoCommerce_Alipay_Block_Redirect extends Mage_Core_Block_Abstract
         if($this->getRequest()->getParam('bank')){
            $standard->setBank($this->getRequest()->getParam('bank'));
         }
-        foreach ($standard->getStandardCheckoutFormFields() as $field => $value) {
-            $form->addField($field, 'hidden', array('name' => $field, 'value' => $value));
+        if(Mage::helper('mobiledetect')->isMobile()) {
+            foreach ($standard->getMobileCheckoutFormFields() as $field => $value) {
+                $form->addField($field, 'hidden', array('name' => $field, 'value' => $value));
+            }
+        } else {
+            foreach ($standard->getStandardCheckoutFormFields() as $field => $value) {
+                $form->addField($field, 'hidden', array('name' => $field, 'value' => $value));
+            }
         }
 
         $formHTML = $form->toHtml();

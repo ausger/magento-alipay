@@ -120,6 +120,11 @@ class CosmoCommerce_Alipay_Model_Payment extends Mage_Payment_Model_Method_Abstr
         return Mage::getUrl('alipay/payment/notify/', array('_secure' => true));
 	}
 
+    protected function getMerchantURL()
+    {
+        return Mage::getUrl('customer/account/', array('_secure' => true));
+    }
+
     /**
      * Capture payment
      *
@@ -142,6 +147,95 @@ class CosmoCommerce_Alipay_Model_Payment extends Mage_Payment_Model_Method_Abstr
     public function getOrderPlaceRedirectUrl()
     {
         return Mage::getUrl('alipay/payment/redirect');
+    }
+
+    /**
+     *  Return Standard Checkout Form Fields for request to Alipay
+     *
+     *  @return	  array Array of hidden form fields
+     */
+    public function getMobileCheckoutFormFields()
+    {
+        $order = $this->getOrder();
+        if (!($order instanceof Mage_Sales_Model_Order)) {
+            Mage::throwException($this->_getHelper()->__('Cannot retrieve order object'));
+        }
+        $converted_final_price=$order->getGrandTotal();//-$logistics_fees;
+
+        if($this->getConfigData('service_type')=="create_forex_trade"){
+
+            $parameter = array('service'           => 'create_forex_trade_wap',
+                'partner'           => $this->getConfigData('partner_id'),
+                'return_url'        => $this->getReturnURL(),
+                'notify_url'        => $this->getNotifyURL(),
+                'merchant_url'      => $this->getMerchantURL(),
+                '_input_charset'    => 'utf-8',
+                'subject'           => $order->getRealOrderId(),
+                'body'              => $order->getRealOrderId(),
+                'out_trade_no'      => $order->getRealOrderId(), // order ID
+                'total_fee'             => sprintf('%.2f', $converted_final_price) ,
+                'currency'      => 'EUR'
+            );
+        }else{
+            $fromCur = Mage::app()->getStore()->getCurrentCurrencyCode();
+            $toCur = 'CNY';
+            if(Mage::app()->getStore()->getCurrentCurrencyCode() !=$toCur){
+                if(Mage::app()->getStore()->getBaseCurrencyCode()!=$toCur){
+                    $rate=Mage::getModel('directory/currency')->load($toCur)->getAnyRate($fromCur);
+                    $converted_final_price= $converted_final_price/$rate;
+                }else{
+                    $rate=Mage::getModel('directory/currency')->load($toCur)->getAnyRate($fromCur);
+                    $converted_final_price= $converted_final_price/$rate;
+                }
+            }
+            $logistics_fees=0;
+            $parameter = array('service'           => trim($this->getConfigData('service_type')),
+                'partner'           => trim($this->getConfigData('partner_id')),
+                'return_url'        => $this->getReturnURL(),
+                'notify_url'        => $this->getNotifyURL(),
+                '_input_charset'    => 'utf-8',
+                'subject'           => $order->getRealOrderId(),
+                'body'              => $order->getRealOrderId(),
+                'out_trade_no'      => $order->getRealOrderId(), // order ID
+                'logistics_fee'     => sprintf('%.2f', $logistics_fees), //because magento has shipping system, it has included shipping price
+                'logistics_payment' => $this->getConfigData('logistics_payment'),  //always
+                'logistics_type'    => $this->getConfigData('logistics'), //Only three shipping method:POST,EMS,EXPRESS
+                'price'             => sprintf('%.2f', $converted_final_price) ,
+                'payment_type'      => '1',
+                'quantity'          => '1', // For the moment, the parameter of price is total price, so the quantity is 1.
+                'show_url'          => Mage::getUrl(),
+                'seller_email'      => $this->getConfigData('seller_email')
+            );
+        }
+        if($this->getBank()){
+            $parameter['paymethod']="bankPay";
+            $parameter['defaultbank']=$this->getBank();
+        }
+        $parameter = $this->para_filter($parameter);
+        $security_code = trim($this->getConfigData('security_code'));
+        $sign_type = 'MD5';
+
+        $arg = "";
+        $sort_array = $this->arg_sort($parameter); //$parameter
+
+        while (list ($key, $val) = each ($sort_array)) {
+            $arg.=$key."=".$this->charset_encode($val,$parameter['_input_charset'])."&";
+        }
+
+        $prestr = substr($arg,0,count($arg)-2);
+
+        $mysign = $this->sign($prestr.$security_code);
+
+        $fields = array();
+        $sort_array = $this->arg_sort($parameter); //$parameter
+        while (list ($key, $val) = each ($sort_array)) {
+            $fields[$key] = $this->charset_encode($val,'utf-8');
+        }
+        $fields['sign'] = $mysign;
+        $fields['sign_type'] = $sign_type;
+
+        $this->logTrans($fields,'Place Mobile Payment Order');
+        return $fields;
     }
 
     /**
