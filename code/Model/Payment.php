@@ -139,6 +139,12 @@ class CosmoCommerce_Alipay_Model_Payment extends Mage_Payment_Model_Method_Abstr
         return $this;
     }
 
+    public function getLogo(){
+        if($this->getConfigData('show_logo_checkout')){
+            return Mage::getStoreConfig('payment/alipay_payment/logo');
+        }
+        return null;
+    }
     /**
      *  Return Order Place Redirect URL
      *
