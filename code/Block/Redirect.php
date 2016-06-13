@@ -51,7 +51,7 @@ class CosmoCommerce_Alipay_Block_Redirect extends Mage_Core_Block_Abstract
         $formHTML = $form->toHtml();
 
         $html = '<html><body>';
-        $html.= $this->__('页面会在几秒内跳转至支付宝安全支付页面。<b>微信浏览下单时请注意：</b> 由于腾讯禁止微信内使用支付宝，页面跳转至支付宝页面无法完成时，请手动复制链接到浏览器以完成支付。');
+        $html.= $this->__('页面会在几秒内自动跳转至支付宝安全支付页面。如果无法自动跳转，请<b>手动复制链接到浏览器</b>以完成支付。');
         $html.= $formHTML;
         //$html.="<script type="text/javascript">window.open('http://www.baidu.com', 'window name', 'window settings');</script>";
         $html.= '<script type="text/javascript">document.getElementById("alipay_payment_checkout").submit();</script>';
