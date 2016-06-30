@@ -167,9 +167,19 @@ class CosmoCommerce_Alipay_Model_Payment extends Mage_Payment_Model_Method_Abstr
             Mage::throwException($this->_getHelper()->__('Cannot retrieve order object'));
         }
         $converted_final_price=$order->getGrandTotal();//-$logistics_fees;
-
         if($this->getConfigData('service_type')=="create_forex_trade"){
-
+            // it has to convert to Euro
+            $fromCur = Mage::app()->getStore()->getCurrentCurrencyCode();
+            $toCur = 'EUR';
+            if(Mage::app()->getStore()->getCurrentCurrencyCode() !=$toCur){
+                if(Mage::app()->getStore()->getBaseCurrencyCode()!=$toCur){
+                    $rate=Mage::getModel('directory/currency')->load($toCur)->getAnyRate($fromCur);
+                    $converted_final_price= $converted_final_price/$rate;
+                }else{
+                    $rate=Mage::getModel('directory/currency')->load($toCur)->getAnyRate($fromCur);
+                    $converted_final_price= $converted_final_price/$rate;
+                }
+            }
             $parameter = array('service'           => 'create_forex_trade_wap',
                 'partner'           => $this->getConfigData('partner_id'),
                 'return_url'        => $this->getReturnURL(),
@@ -258,7 +268,13 @@ class CosmoCommerce_Alipay_Model_Payment extends Mage_Payment_Model_Method_Abstr
 		$converted_final_price=$order->getGrandTotal();//-$logistics_fees;
 
 		if($this->getConfigData('service_type')=="create_forex_trade"){
-		
+            // it has to convert to Euro
+            $fromCur = Mage::app()->getStore()->getCurrentCurrencyCode();
+            $toCur = 'EUR';
+            if(Mage::app()->getStore()->getCurrentCurrencyCode() !=$toCur){
+                $rate=Mage::getModel('directory/currency')->load($toCur)->getAnyRate($fromCur);
+                $converted_final_price= $converted_final_price/$rate;
+            }
 			$parameter = array('service'           => $this->getConfigData('service_type'),
 							   'partner'           => $this->getConfigData('partner_id'),
                                'return_url'        => $this->getReturnURL(),
