@@ -54,7 +54,21 @@ class CosmoCommerce_Alipay_Block_Redirect extends Mage_Core_Block_Abstract
         $html.= $this->__('页面会在几秒内自动跳转至支付宝安全支付页面。如果无法自动跳转，请<b>手动复制链接到浏览器</b>以完成支付。');
         $html.= $formHTML;
         //$html.="<script type="text/javascript">window.open('http://www.baidu.com', 'window name', 'window settings');</script>";
-        $html.= '<script type="text/javascript">document.getElementById("alipay_payment_checkout").submit();</script>';
+
+        $html.= " <script src='/js/alipay/ap.js'></script><script>
+	   			//该js用于微信上使用支付宝支付
+	           window.onload = function() {
+	           var queryParam = '';
+	           Array.prototype.slice.call(document.querySelectorAll('input[type=hidden]')).forEach(function (ele) {
+	        	   queryParam += ele.name + '=' + encodeURIComponent(ele.value) + '&';
+	           });
+	           var gotoUrl = document.querySelector('#alipay_payment_checkout').getAttribute('action') + queryParam;
+	           _AP.pay(gotoUrl);
+	        }
+	    </script>";
+
+
+        //$html.= '<script type="text/javascript">document.getElementById("alipay_payment_checkout").submit();</script>';
         $html.= '</body></html>';
 
 

@@ -6,3 +6,5 @@ skin/banks.png                              skin/frontend/base/default/images/ba
 skin/bg_icons.png                           skin/frontend/base/default/images/bg_icons.png
 skin/bg_icons_p24.png                       skin/frontend/base/default/images/bg_icons_p24.png
 lib                                         lib/Alipay
+js/alipay/ap.js                             js/alipay/ap.js
+pay.htm                                     pay.htm
